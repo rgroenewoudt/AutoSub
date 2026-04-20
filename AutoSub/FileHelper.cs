@@ -1,4 +1,5 @@
-﻿using FFMpegCore;
+﻿#nullable enable
+using FFMpegCore;
 using FFMpegCore.Pipes;
 using System.Diagnostics;
 using System.Threading;
@@ -82,6 +83,20 @@ public static class FileHelper
         ".xvid"
     ];
 
+    // Image-based subtitle codecs that cannot be used as text subtitles.
+    // Files with only these codecs should still be transcribed by Whisper.
+    private static readonly HashSet<string> ImageBasedSubtitleCodecs = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "dvd_subtitle",   // DVD VOBsub
+        "dvdsub",
+        "hdmv_pgs_subtitle", // Blu-ray PGS
+        "pgssub",
+        "xsub",           // XSUB (DivX AVI)
+    };
+
+    public static bool IsImageBasedSubtitleCodec(string? codecName) =>
+        codecName != null && ImageBasedSubtitleCodecs.Contains(codecName);
+
     public static bool HasSubtitleFile(string videoFile)
     {
         var dir = Path.GetDirectoryName(videoFile)!;
@@ -147,7 +162,7 @@ public static class FileHelper
         var start = Stopwatch.GetTimestamp();
 
         // Detect audio stream
-        AudioStream audioStream;
+        AudioStream? audioStream;
         if (mediaInfo.AudioStreams.Count == 1)
         {
             audioStream = mediaInfo.AudioStreams[0];

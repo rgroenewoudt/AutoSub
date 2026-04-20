@@ -188,15 +188,25 @@ public class ProcessCommand : AsyncCommand<ProcessSettings>
 
                         var mediaInfo = await FFProbe.AnalyseAsync(file, cancellationToken: CancellationToken.None);
 
-                        if (mediaInfo.SubtitleStreams.Any())
+                        var textSubtitleStreams = mediaInfo.SubtitleStreams
+                            .Where(s => !FileHelper.IsImageBasedSubtitleCodec(s.CodecName))
+                            .ToList();
+
+                        if (textSubtitleStreams.Count > 0)
                         {
-                            var info = string.Join(";", mediaInfo.SubtitleStreams.Select(s => $"subtitle: {s.CodecName}, {s.Language}, {string.Join(",", s.Tags?.Select(t => $"{t.Key}:{t.Value}") ?? Array.Empty<string>())}"));
+                            var info = string.Join(";", textSubtitleStreams.Select(s => $"subtitle: {s.CodecName}, {s.Language}, {string.Join(",", s.Tags?.Select(t => $"{t.Key}:{t.Value}") ?? Array.Empty<string>())}"));
                             
-                            Logger.Info($"Subtitles already embedded in {file}: {info}, skipping");
+                            Logger.Info($"Text subtitles already embedded in {file}: {info}, skipping");
 
                             newEntities.Add(new Subtitle() { VideoPath = file, Language = "en" });
                             processStatus = ProcessStatus.Skipped;
                             continue;
+                        }
+
+                        if (mediaInfo.SubtitleStreams.Count > 0)
+                        {
+                            var info = string.Join(";", mediaInfo.SubtitleStreams.Select(s => $"subtitle: {s.CodecName}, {s.Language}"));
+                            Logger.Info($"Only image-based subtitles found in {file}: {info}, will transcribe with Whisper");
                         }
 
                         Logger.Info($"Processing video {file}...");
