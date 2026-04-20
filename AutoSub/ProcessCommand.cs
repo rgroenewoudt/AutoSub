@@ -190,7 +190,9 @@ public class ProcessCommand : AsyncCommand<ProcessSettings>
 
                         if (mediaInfo.SubtitleStreams.Any())
                         {
-                            Logger.Info($"Subtitles already embedded in {file}, skipping");
+                            var info = string.Join(";", mediaInfo.SubtitleStreams.Select(s => $"subtitle: {s.CodecName}, {s.Language}, {string.Join(",", s.Tags?.Select(t => $"{t.Key}:{t.Value}") ?? Array.Empty<string>())}"));
+                            
+                            Logger.Info($"Subtitles already embedded in {file}: {info}, skipping");
 
                             newEntities.Add(new Subtitle() { VideoPath = file, Language = "en" });
                             processStatus = ProcessStatus.Skipped;
