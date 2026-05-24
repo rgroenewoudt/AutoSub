@@ -108,6 +108,7 @@ public class ProcessCommand : AsyncCommand<ProcessSettings>
         var files = Directory.GetFiles(directory, "*.*", SearchOption.AllDirectories)
             .Where(f => FileHelper.VideoFileExtensions.Any(ext => f.EndsWith(ext, StringComparison.OrdinalIgnoreCase)))
             .ToList();
+        AnsiConsole.MarkupLineInterpolated($"[grey]Found {files.Count} files to process...[/]");
 
         await AnsiConsole.Live(new Panel("Starting processing..."))
             .AutoClear(false)
