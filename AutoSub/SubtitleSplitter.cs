@@ -18,22 +18,24 @@ public static class SubtitleSplitter
         {
             var idx = text.LastIndexOf(delim, maxLineLength, StringComparison.Ordinal);
             if (idx > 0)
-                return
-                [
-                    text[..(idx + delim.Trim().Length)].Trim(),
-                    text[(idx + delim.Length)..].Trim()
-                ];
+            {
+                var first = text[..(idx + delim.Trim().Length)].Trim();
+                var remainder = text[(idx + delim.Length)..].Trim();
+                var result = new List<string> { first };
+                result.AddRange(SmartSplit(remainder, maxLineLength));
+                return result;
+            }
         }
 
         // Fallback: split at nearest space before max length
         var spaceIdx = text.LastIndexOf(' ', maxLineLength);
         if (spaceIdx > 0)
         {
-            return
-            [
-                text[..spaceIdx].Trim(),
-                text[spaceIdx..].Trim()
-            ];
+            var first = text[..spaceIdx].Trim();
+            var remainder = text[spaceIdx..].Trim();
+            var result = new List<string> { first };
+            result.AddRange(SmartSplit(remainder, maxLineLength));
+            return result;
         }
 
         // If still nothing, just return whole

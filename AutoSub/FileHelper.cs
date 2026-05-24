@@ -128,17 +128,17 @@ public static class FileHelper
             else
             {
                 var files = Directory.GetFiles(Path.Combine(dir, "Subs"))
-                    .Where(f => f.Contains(filenameWithoutExt))
+                    .Where(f => Path.GetFileNameWithoutExtension(f).Equals(filenameWithoutExt, StringComparison.OrdinalIgnoreCase))
                     .ToList();
 
-                var idxFile = files.FirstOrDefault(x => x.Contains(filenameWithoutExt + ".idx", StringComparison.OrdinalIgnoreCase));
-                var subFile = files.FirstOrDefault(x => x.Contains(filenameWithoutExt + ".sub", StringComparison.OrdinalIgnoreCase));
+                var idxFile = files.FirstOrDefault(x => Path.GetFileName(x).Equals(filenameWithoutExt + ".idx", StringComparison.OrdinalIgnoreCase));
+                var subFile = files.FirstOrDefault(x => Path.GetFileName(x).Equals(filenameWithoutExt + ".sub", StringComparison.OrdinalIgnoreCase));
 
                 if(idxFile != null && subFile != null)
                 {
                     Logger.Info($"Moved .idx/sub from Subs directory");
-                    File.Move(idxFile, prefix + ".idx");
-                    File.Move(subFile, prefix + ".sub");
+                    File.Move(idxFile, prefix + ".idx", overwrite: true);
+                    File.Move(subFile, prefix + ".sub", overwrite: true);
                     return true;
                 }
             }
@@ -227,33 +227,41 @@ public static class FileHelper
 
         int subtitleCount = 0;
         var tmpFile = Path.GetTempFileName();
-        await using (var srtFileStream =
-                     new StreamWriter(new FileStream(tmpFile, FileMode.OpenOrCreate, FileAccess.Write,
-                         FileShare.None)))
+        try
         {
-            await foreach (var result in whisperEnumerable)
+            await using (var srtFileStream =
+                         new StreamWriter(new FileStream(tmpFile, FileMode.OpenOrCreate, FileAccess.Write,
+                             FileShare.None)))
             {
-                //Console.WriteLine($"{result.Start}->{result.End}: {result.NoSpeechProbability}");
+                await foreach (var result in whisperEnumerable)
+                {
+                    //Console.WriteLine($"{result.Start}->{result.End}: {result.NoSpeechProbability}");
 
-                if (cancellationToken.IsCancellationRequested)
-                    return;
+                    if (cancellationToken.IsCancellationRequested)
+                        return;
 
-                var lines = SubtitleSplitter.SmartSplit(result.Text);
-                if (lines.Count == 0)
-                    continue;
+                    var lines = SubtitleSplitter.SmartSplit(result.Text);
+                    if (lines.Count == 0)
+                        continue;
 
-                await srtFileStream.WriteLineAsync($"{subtitleCount++}");
-                await srtFileStream.WriteLineAsync(
-                    $"{result.Start:hh\\:mm\\:ss\\,fff} --> {result.End:hh\\:mm\\:ss\\,fff}");
+                    await srtFileStream.WriteLineAsync($"{subtitleCount++}");
+                    await srtFileStream.WriteLineAsync(
+                        $"{result.Start:hh\\:mm\\:ss\\,fff} --> {result.End:hh\\:mm\\:ss\\,fff}");
 
-                foreach (var line in lines)
-                    await srtFileStream.WriteLineAsync(line);
+                    foreach (var line in lines)
+                        await srtFileStream.WriteLineAsync(line);
 
-                await srtFileStream.WriteLineAsync();
+                    await srtFileStream.WriteLineAsync();
+                }
             }
-        }
 
-        File.Move(tmpFile, enSrtFile);
+            File.Move(tmpFile, enSrtFile, overwrite: true);
+        }
+        finally
+        {
+            if (File.Exists(tmpFile))
+                File.Delete(tmpFile);
+        }
 
         var duration = (int)Stopwatch.GetElapsedTime(start).TotalMilliseconds;
         Logger.Info($"Processing took {duration}ms, resulting in {subtitleCount} records in .srt file");

@@ -162,8 +162,8 @@ public class ProcessCommand : AsyncCommand<ProcessSettings>
 
                     if (existingSubtitles.Contains(file))
                     {
-                        //skippedCount++;
-                        //continue;
+                        skippedCount++;
+                        continue;
                     }
 
                     if (newEntities.Count >= 10)

@@ -20,6 +20,13 @@ public class DatabaseContext : DbContext
     // special "local" folder for your platform.
     protected override void OnConfiguring(DbContextOptionsBuilder options)
         => options.UseSqlite($"Data Source={DbPath}").UseBulkInsertSqlite();
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Subtitle>()
+            .HasIndex(s => s.VideoPath)
+            .IsUnique();
+    }
 }
 
 public class Subtitle

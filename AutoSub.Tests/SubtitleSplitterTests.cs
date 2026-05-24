@@ -30,9 +30,10 @@ public class SubtitleSplitterTests
         var input = "This is a long line, which should be split at the comma.";
         var result = SubtitleSplitter.SmartSplit(input, 30);
 
-        Assert.That(result.Count, Is.EqualTo(2));
+        Assert.That(result.Count, Is.EqualTo(3));
         Assert.That(result[0], Is.EqualTo("This is a long line,"));
-        Assert.That(result[1], Is.EqualTo("which should be split at the comma."));
+        Assert.That(result[1], Is.EqualTo("which should be split at the"));
+        Assert.That(result[2], Is.EqualTo("comma."));
     }
 
     [Test]
@@ -41,9 +42,10 @@ public class SubtitleSplitterTests
         var input = "This is a very long sentence without natural breaks";
         var result = SubtitleSplitter.SmartSplit(input, 25);
 
-        Assert.That(result.Count, Is.EqualTo(2));
-        Assert.That(result[0].Length, Is.LessThanOrEqualTo(25));
-        Assert.That(result[1].Length, Is.LessThanOrEqualTo(31));
+        Assert.That(result.Count, Is.EqualTo(3));
+        Assert.That(result[0], Is.EqualTo("This is a very long"));
+        Assert.That(result[1], Is.EqualTo("sentence without natural"));
+        Assert.That(result[2], Is.EqualTo("breaks"));
     }
 
     [Test]
