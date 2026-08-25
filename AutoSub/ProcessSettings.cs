@@ -11,6 +11,6 @@ public class ProcessSettings : CommandSettings
 
     [CommandOption("-m|--model")]
     [Description("The Whisper model to use (tiny, base, small, medium, large-v1, large-v2, large-v3)")]
-    [DefaultValue("medium")]
-    public string Model { get; set; } = "medium";
+    [DefaultValue("small")]
+    public string Model { get; set; } = "small";
 }
