@@ -30,6 +30,10 @@ internal class Program
         {
             config.SetApplicationName("AutoSub");
             config.SetApplicationVersion("1.0.0");
+
+            config.AddCommand<ListCommand>("list")
+                .WithDescription("List video files that have no subtitles (neither embedded nor as separate file)")
+                .WithExample("list", @"D:\Movies");
         });
 
         return await app.RunAsync(args);

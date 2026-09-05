@@ -105,9 +105,7 @@ public class ProcessCommand : AsyncCommand<ProcessSettings>
         List<Subtitle> newEntities = [];
 
         AnsiConsole.MarkupLineInterpolated($"[grey]Searching files...[/]");
-        var files = Directory.GetFiles(directory, "*.*", SearchOption.AllDirectories)
-            .Where(f => FileHelper.VideoFileExtensions.Any(ext => f.EndsWith(ext, StringComparison.OrdinalIgnoreCase)))
-            .ToList();
+        var files = FileHelper.FindVideoFiles(directory);
         AnsiConsole.MarkupLineInterpolated($"[grey]Found {files.Count} files to process...[/]");
 
         await AnsiConsole.Live(new Panel("Starting processing..."))
@@ -189,12 +187,11 @@ public class ProcessCommand : AsyncCommand<ProcessSettings>
 
                         var mediaInfo = await FFProbe.AnalyseAsync(file, cancellationToken: CancellationToken.None);
 
-                        var textSubtitleStreams = mediaInfo.SubtitleStreams
-                            .Where(s => !FileHelper.IsImageBasedSubtitleCodec(s.CodecName))
-                            .ToList();
-
-                        if (textSubtitleStreams.Count > 0)
+                        if (FileHelper.HasTextSubtitleStream(mediaInfo))
                         {
+                            var textSubtitleStreams = mediaInfo.SubtitleStreams
+                                .Where(s => !FileHelper.IsImageBasedSubtitleCodec(s.CodecName));
+
                             var info = string.Join(";", textSubtitleStreams.Select(s => $"subtitle: {s.CodecName}, {s.Language}, {string.Join(",", s.Tags?.Select(t => $"{t.Key}:{t.Value}") ?? Array.Empty<string>())}"));
                             
                             Logger.Info($"Text subtitles already embedded in {file}: {info}, skipping");

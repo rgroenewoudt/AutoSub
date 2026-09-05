@@ -97,7 +97,25 @@ public static class FileHelper
     public static bool IsImageBasedSubtitleCodec(string? codecName) =>
         codecName != null && ImageBasedSubtitleCodecs.Contains(codecName);
 
-    public static bool HasSubtitleFile(string videoFile)
+    /// <summary>
+    /// Returns all video files below <paramref name="directory"/>, based on <see cref="VideoFileExtensions"/>.
+    /// </summary>
+    public static List<string> FindVideoFiles(string directory) =>
+        Directory.GetFiles(directory, "*.*", SearchOption.AllDirectories)
+            .Where(f => VideoFileExtensions.Any(ext => f.EndsWith(ext, StringComparison.OrdinalIgnoreCase)))
+            .ToList();
+
+    /// <summary>
+    /// True when the media contains at least one text-based (usable) subtitle stream.
+    /// </summary>
+    public static bool HasTextSubtitleStream(IMediaAnalysis mediaInfo) =>
+        mediaInfo.SubtitleStreams.Any(s => !IsImageBasedSubtitleCodec(s.CodecName));
+
+    /// <param name="moveFromSubs">
+    /// When true, subtitles found in a "Subs" directory are moved next to the video file.
+    /// Pass false to detect without touching the file system.
+    /// </param>
+    public static bool HasSubtitleFile(string videoFile, bool moveFromSubs = true)
     {
         var dir = Path.GetDirectoryName(videoFile)!;
         var filenameWithoutExt = Path.GetFileNameWithoutExtension(videoFile);
@@ -120,8 +138,11 @@ public static class FileHelper
 
                 if (srtFile != null)
                 {
-                    Logger.Info($"Moved .srt from Subs directory");
-                    File.Move(srtFile, prefix + ".srt");
+                    if (moveFromSubs)
+                    {
+                        Logger.Info($"Moved .srt from Subs directory");
+                        File.Move(srtFile, prefix + ".srt");
+                    }
                     return true;
                 }
             }
@@ -136,9 +157,12 @@ public static class FileHelper
 
                 if(idxFile != null && subFile != null)
                 {
-                    Logger.Info($"Moved .idx/sub from Subs directory");
-                    File.Move(idxFile, prefix + ".idx", overwrite: true);
-                    File.Move(subFile, prefix + ".sub", overwrite: true);
+                    if (moveFromSubs)
+                    {
+                        Logger.Info($"Moved .idx/sub from Subs directory");
+                        File.Move(idxFile, prefix + ".idx", overwrite: true);
+                        File.Move(subFile, prefix + ".sub", overwrite: true);
+                    }
                     return true;
                 }
             }
@@ -146,8 +170,11 @@ public static class FileHelper
             var subsDirSrt = Path.Combine(dir, "Subs", filenameWithoutExt, "2_English.srt");
             if (File.Exists(subsDirSrt))
             {
-                Logger.Info($"Moved srt from Subs directory: {subsDirSrt}");
-                File.Move(subsDirSrt, prefix + ".en.srt");
+                if (moveFromSubs)
+                {
+                    Logger.Info($"Moved srt from Subs directory: {subsDirSrt}");
+                    File.Move(subsDirSrt, prefix + ".en.srt");
+                }
                 return true;
             }
         }
