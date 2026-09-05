@@ -6,7 +6,8 @@ using System.Text;
 namespace AutoSub;
 
 /// <summary>
-/// Lists video files that have neither an external subtitle file nor an embedded text subtitle stream.
+/// Lists video files that have neither an external subtitle file nor an embedded subtitle stream
+/// (text or image-based, e.g. VobSub). Processing differs here: it transcribes image-only files.
 /// Read-only: unlike processing, it never moves subtitles out of a "Subs" directory.
 /// </summary>
 public class ListCommand : AsyncCommand<ListSettings>
@@ -52,7 +53,8 @@ public class ListCommand : AsyncCommand<ListSettings>
             {
                 var mediaInfo = await FFProbe.AnalyseAsync(file, cancellationToken: cts.Token);
 
-                if (FileHelper.HasTextSubtitleStream(mediaInfo))
+                // Any subtitle stream counts here, including image-based ones such as VobSub.
+                if (mediaInfo.SubtitleStreams.Count > 0)
                     continue;
             }
             catch (OperationCanceledException) when (cts.Token.IsCancellationRequested)
