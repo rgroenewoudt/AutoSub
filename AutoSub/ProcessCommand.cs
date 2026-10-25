@@ -14,7 +14,7 @@ public class ProcessCommand : AsyncCommand<ProcessSettings>
 {
     private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
 
-    protected override async Task<int> ExecuteAsync(CommandContext context, ProcessSettings settings, CancellationToken cancellationToken)
+    public override async Task<int> ExecuteAsync(CommandContext context, ProcessSettings settings, CancellationToken cancellationToken)
     {
         Console.InputEncoding = Console.OutputEncoding = Encoding.UTF8;
 

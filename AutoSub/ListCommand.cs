@@ -14,7 +14,7 @@ public class ListCommand : AsyncCommand<ListSettings>
 {
     private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
 
-    protected override async Task<int> ExecuteAsync(CommandContext context, ListSettings settings, CancellationToken cancellationToken)
+    public override async Task<int> ExecuteAsync(CommandContext context, ListSettings settings, CancellationToken cancellationToken)
     {
         Console.OutputEncoding = Encoding.UTF8;
 
